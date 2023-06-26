@@ -1,22 +1,18 @@
 import * as React from "react";
 import * as Form from "@radix-ui/react-form";
+import * as Toast from "@radix-ui/react-toast";
 
 const App: React.SFC = () => {
     const [formData, setFormData] = React.useState({
-        // title: "",
-        // heading: "",
-        // buttonText: "",
-        // tweetText: "",
-        // imageURL: "",
-
-        title: "a",
-        heading: "a",
-        buttonText: "a",
-        tweetText: "a",
-        imageURL:
-            "https://pbs.twimg.com/media/FzgKfSsXwAEYpnu?format=jpg&name=large",
+        title: "",
+        heading: "",
+        buttonText: "",
+        tweetText: "",
+        imageURL: "",
     });
     const [link, setLink] = React.useState("");
+    const [open, setOpen] = React.useState(false);
+    const timerRef = React.useRef(0);
 
     const handleSubmit = (event) => {
         event.preventDefault();
@@ -31,12 +27,20 @@ const App: React.SFC = () => {
                 formData.tweetText
             )}&image_attachment=${encodeURIComponent(formData.imageURL)}`
         );
-        // https://twitter.com/i/notifications/anniversary?title=123123&message=4441&action=234&text=5&image_attachment=
     };
-    const copy = async () => {
+    const copyToClipboard = async () => {
         await navigator.clipboard.writeText(link);
-        alert("Text copied");
+        setOpen(false);
+        window.clearTimeout(timerRef.current);
+        timerRef.current = window.setTimeout(() => {
+            setOpen(true);
+        }, 100);
     };
+
+    React.useEffect(() => {
+        return () => clearTimeout(timerRef.current);
+    }, []);
+
     return (
         <>
             <header>
@@ -48,35 +52,37 @@ const App: React.SFC = () => {
                 onSubmit={handleSubmit}
             />
             <div className="linkArea">
-                <label id="link" className="linkArea__label">
-                    Link
-                    <button
-                        type="button"
-                        className="linkArea__copyButton"
-                        onClick={copy}
-                    >
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="16"
-                            height="16"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
+                <label htmlFor="link" className="linkArea__label">
+                    <h2>Link</h2>
+                    <Toast.Provider>
+                        <button
+                            type="button"
+                            className="linkArea__copyButton"
+                            onClick={copyToClipboard}
                         >
-                            <rect
-                                x="9"
-                                y="9"
-                                width="13"
-                                height="13"
-                                rx="2"
-                                ry="2"
-                            ></rect>
-                            <path d="M5 15l2-2 4 4"></path>
-                        </svg>
-                    </button>
+                            <img
+                                src={require("./assets/copy.svg")}
+                                alt="Copy to clipboard"
+                            />
+                        </button>
+                        <Toast.Root
+                            className="toast"
+                            open={open}
+                            onOpenChange={setOpen}
+                        >
+                            <Toast.Title className="toast__title">
+                                Copied to Clipboard
+                            </Toast.Title>
+                            <Toast.Action
+                                className="ToastAction"
+                                asChild
+                                altText="Close Button"
+                            >
+                                <button className="toast__button">✖</button>
+                            </Toast.Action>
+                        </Toast.Root>
+                        <Toast.Viewport className="toast__viewport" />
+                    </Toast.Provider>
                 </label>
                 <textarea
                     id="link"
@@ -84,7 +90,7 @@ const App: React.SFC = () => {
                     wrap="off"
                     value={link}
                     placeholder="Generate a link to see the preview"
-                    readonly
+                    readOnly
                     onFocus={(event) => event.target.select()}
                 ></textarea>
             </div>
@@ -95,7 +101,7 @@ const App: React.SFC = () => {
     );
 };
 
-const TwitterForm: React.SFC = ({ formData, setFormData, onSubmit }) => {
+const TwitterForm = ({ formData, setFormData, onSubmit }) => {
     return (
         <Form.Root className="form" onSubmit={onSubmit}>
             <TwitterFormField
@@ -180,7 +186,7 @@ const TwitterForm: React.SFC = ({ formData, setFormData, onSubmit }) => {
     );
 };
 
-const TwitterFormField: React.SFC = ({
+const TwitterFormField = ({
     title,
     label,
     messages,
@@ -216,7 +222,7 @@ const TwitterFormField: React.SFC = ({
     );
 };
 
-const TwitterFormMessage: React.SFC = ({ match, message, ...props }) => (
+const TwitterFormMessage = ({ match, message, ...props }) => (
     <Form.Message className="form__message" match={match}>
         {message}
     </Form.Message>
